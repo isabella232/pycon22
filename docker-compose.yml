@@ -6,7 +6,7 @@ services:
   # NOTE: You will need to up the max map count on your system
   #       sudo sysctl -w vm.max_map_count=262144
   elasticsearch:
-    image: elasticsearch:7.9.3
+    image: elasticsearch:8.1.2
     container_name: elasticsearch
     networks:
       docker-elk:
@@ -23,7 +23,7 @@ services:
       - ./tmp/elasticsearch:/usr/share/elasticsearch/data
 
   kibana:
-    image: kibana:7.9.3
+    image: kibana:8.1.2
     container_name: kibana
     environment:
       - "ELASTICSEARCH_URL=http://elasticsearch:9200"
@@ -33,7 +33,7 @@ services:
       - elasticsearch
 
   postgres:
-    image: postgres:9.6-alpine
+    image: postgres:14.2-alpine
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
