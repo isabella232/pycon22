@@ -1,0 +1,48 @@
+# This is purely a development setup. DO NOT RUN THIS IN PRODUCTION
+
+version: '3.7'
+
+services:
+  # NOTE: You will need to up the max map count on your system
+  #       sudo sysctl -w vm.max_map_count=262144
+  elasticsearch:
+    image: elasticsearch:7.9.3
+    container_name: elasticsearch
+    networks:
+      docker-elk:
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - "discovery.type=single-node"
+    volumes:
+      - ./tmp/elasticsearch:/usr/share/elasticsearch/data
+
+  kibana:
+    image: kibana:7.9.3
+    container_name: kibana
+    environment:
+      - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+    networks:
+      - docker-elk
+    depends_on:
+      - elasticsearch
+
+  postgres:
+    image: postgres:9.6-alpine
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./tmp/postgres:/var/lib/postgresql/data
+
+networks:
+  docker-elk:
+    driver: bridge
