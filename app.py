@@ -12,14 +12,20 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
+CSV_FILENAME = "data/netflix_titles.csv"
+
+
 @app.route("/")
 def hello_world():
     return "<p>Hello, World!</p>"
 
-CSV_FILENAME = "data/netflix_titles.csv"
 
 @app.route("/populate-db")
 def populate_db():
+    """Populates the relational db with sample data.
+
+    Reads the CSV file in data/netflix_titles.csv and saves them in a `show` table in the database.
+    """
     df = pd.read_csv(CSV_FILENAME, header=0, index_col=0)
     for _, row in df.iterrows():
         
@@ -48,11 +54,14 @@ def populate_db():
 
     return f"<p>Done populating db! ({len(df)} Shows inserted.) Have a nice day.</p>"  # count will be not correct because of swallowed errors, but it is just sample data
 
-'''
+
+"""
+Just because I keep forgetting:
+
 $ flask db init
 $ flask db migrate
 $ flask db upgrade
-'''
+"""
 class ShowModel(db.Model):
     __tablename__ = 'show'
 
