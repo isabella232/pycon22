@@ -21,51 +21,18 @@ CSV_FILENAME = "data/netflix_titles.csv"
 @app.route("/populate-db")
 def populate_db():
     df = pd.read_csv(CSV_FILENAME, header=0, index_col=0)
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
+        
         show = row.to_dict()
-        for key in show.keys():
-            if key == "director":
-                pass
-                # TODO
-                # split on ,
-                # multiple
-
-            elif key == "cast":
-                pass
-                # TODO
-                # split on ,
-                # multiple
-
-            elif key == "country":
-                pass
-                # TODO
-                # split on ,
-                # multiple
-
-            elif key == "date_added":
-                pass
-                # TODO
-                # parse "monthname date, year"
-
-            elif key == "duration":
-                pass
-                # TODO
-                # 90 min
-                # 2 Seasons
-                # 1 Season
-
-            elif key == "listed_in":
-                pass
-                # TODO
-                # split on ,
-                # multiple
-
         # save show to db
         try:
             new_show = ShowModel(
                 show_type=show['show_type'],
                 name=show['title'],
-                date_added=parser.parse(show['date_added']),
+                director=show['director'],
+                cast=show['cast'],
+                country=show['countries'].split(',')[0] if type(show['countries']) == str else '',
+                date_added=parser.parse(show['date_added']) if type(show['date_added']) == str else None,
                 release_year=show['release_year'],
                 rating=show['rating'],
                 duration=show['duration'],
@@ -73,8 +40,10 @@ def populate_db():
             )
             db.session.add(new_show)
             db.session.commit()
-        except:
+        except Exception as ex:
+            print(f'IGNORED: {ex}')
             # Ignore errors, it is just sample data.
+            # raise(ex)
             pass
 
     return f"<p>Done populating db! ({len(df)} Shows inserted.) Have a nice day.</p>"  # count will be not correct because of swallowed errors, but it is just sample data
@@ -90,9 +59,9 @@ class ShowModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     show_type = db.Column(db.String())
     name = db.Column(db.String())
-    # director TODO
-    # cast TODO
-    # country TODO
+    director = db.Column(db.String())
+    cast = db.Column(db.String())
+    country = db.Column(db.String())
     date_added = db.Column(db.DateTime)
     release_year = db.Column(db.Integer)
     rating = db.Column(db.String())
@@ -100,9 +69,12 @@ class ShowModel(db.Model):
     #categories TODO
     description = db.Column(db.String())
 
-    def __init__(self, show_type, name, date_added, release_year, rating, duration, description):
+    def __init__(self, show_type, name, director, cast, country, date_added, release_year, rating, duration, description):
         self.show_type = show_type
         self.name = name
+        self.director = director
+        self.cast = cast
+        self.country = country
         self.date_added = date_added
         self.release_year = release_year
         self.rating = rating
@@ -111,32 +83,6 @@ class ShowModel(db.Model):
         
     def __repr__(self):
         return f"<Show {self.name}>"
-
-class CountryModel(db.Model):
-    __tablename__ = 'country'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String())
-
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return f"<Country {self.name}>"
-
-
-class PersonModel(db.Model):
-    __tablename__ = 'person'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String())
-
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return f"<Person {self.name}>"        
-
 
 class CategoryModel(db.Model):
     __tablename__ = 'category'
