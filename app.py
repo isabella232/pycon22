@@ -66,7 +66,6 @@ class ShowModel(db.Model):
     release_year = db.Column(db.Integer)
     rating = db.Column(db.String())
     duration = db.Column(db.String())
-    #categories TODO
     description = db.Column(db.String())
 
     def __init__(self, show_type, name, director, cast, country, date_added, release_year, rating, duration, description):
@@ -83,15 +82,3 @@ class ShowModel(db.Model):
         
     def __repr__(self):
         return f"<Show {self.name}>"
-
-class CategoryModel(db.Model):
-    __tablename__ = 'category'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String())
-
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return f"<Category {self.name}>"                
