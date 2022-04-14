@@ -73,13 +73,6 @@ def populate_db():
     return f"<p>Done populating db! ({len(df)} Shows inserted.) Have a nice day.</p>"  # count will be not correct because of swallowed errors, but it is just sample data
 
 
-"""
-Just because I keep forgetting:
-
-$ flask db init
-$ flask db migrate
-$ flask db upgrade
-"""
 class ShowModel(db.Model):
     __tablename__ = 'show'
 
