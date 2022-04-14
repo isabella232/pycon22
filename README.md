@@ -19,7 +19,7 @@ Now you have a running Elasticsearch on http://localhost:9200
 The docker compose file starts Postgres on the default port 5432. To create a database do the following:
 
 ```bash
-psql -h localhost -u postgres
+docker exec -it <container_name> psql -h localhost -U postgres
 ```
 
 This should log you into the Postgres console (without asking for a password). No enter the following sql command:
@@ -55,6 +55,7 @@ The first time you try this you will get an error. This is because the Postgres 
   Call the following to create all the tables necessary to run the project:
 
   ```
+  source .venv/bin/activate
   flask db init
   flask db migrate
   flask db upgrade
