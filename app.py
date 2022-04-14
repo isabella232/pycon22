@@ -6,13 +6,17 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+SAMPLE_DATA_CSV_FILENAME = "data/netflix_titles.csv"
+SQLALCHEMY_DATABASE_URI = "postgresql://postgres:postgres@localhost:5432/pycon22"
+
+ELASTICSEARCH_HOST = "http://localhost:9200"
+INDEX_NAME = "shows"
+
+
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:postgres@localhost:5432/pycon22"
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
-
-CSV_FILENAME = "data/netflix_titles.csv"
 
 
 @app.route("/")
@@ -20,22 +24,29 @@ def hello_world():
     return "<p>Hello, World!</p>"
 
 
-
-
 @app.route("/bulk-ingest")
 def bulk_ingest():
-    """Ingest all shows into Elasticsearch index."""
+    """Ingest all shows into Elasticsearch index.
+
+    You can look at the index in the browser with this URL:
+    http://localhost:9200/shows/_search?size=10000&q=*:*
+    """
     
-    es = Elasticsearch()
+    es = Elasticsearch(ELASTICSEARCH_HOST)
+    resp = helpers.bulk(es, _generate_bulk_show_data())
+    print(resp)
 
-    doc = {
-        'author': 'kimchy',
-        'text': 'Elasticsearch: cool. bonsai cool.',
-        'timestamp': datetime.now(),
-    }
-    resp = es.index(index="test-index", id=1, document=doc)
-    print(resp['result'])
+    return "<p>Bulk ingest done.</p>"
 
+
+def _generate_bulk_show_data():
+    """Generator that yields all shows in a JSON format Elasticsearch can ingest."""
+    for show in ShowModel.query.all():
+        yield {
+            '_index': INDEX_NAME,
+            '_id': show.id,
+            '_source': show.search_document(),
+        }
 
 
 @app.route("/populate-db")
@@ -44,7 +55,9 @@ def populate_db():
 
     Reads the CSV file in data/netflix_titles.csv and saves them in a `show` table in the database.
     """
-    df = pd.read_csv(CSV_FILENAME, header=0, index_col=0)
+    df = pd.read_csv(SAMPLE_DATA_CSV_FILENAME, header=0, index_col=0)
+    df = df.where(pd.notnull(df), None)  # replace NaN with None
+
     for _, row in df.iterrows():
         
         show = row.to_dict()
@@ -56,7 +69,7 @@ def populate_db():
                 director=show['director'],
                 cast=show['cast'],
                 country=show['countries'].split(',')[0] if type(show['countries']) == str else '',
-                date_added=parser.parse(show['date_added']) if type(show['date_added']) == str else None,
+                date_added=parser.parse(show['date_added']),
                 release_year=show['release_year'],
                 rating=show['rating'],
                 duration=show['duration'],
@@ -102,3 +115,17 @@ class ShowModel(db.Model):
         
     def __repr__(self):
         return f"<Show {self.name}>"
+
+    def search_document(self):
+        return {
+            "type": self.show_type,
+            "name": self.name,
+            "director": self.director,
+            "cast": self.cast,
+            "country": self.country,
+            "date_added": self.date_added,
+            "release_year": self.release_year,
+            "rating": self.rating,
+            "duration": self.duration,
+            "description": self.description,
+        }

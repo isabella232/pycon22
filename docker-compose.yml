@@ -19,6 +19,8 @@ services:
       - "9300:9300"
     environment:
       - "discovery.type=single-node"
+      # NEVER disable the security in production! This is just for development
+      - "xpack.security.enabled=false"
     volumes:
       - ./tmp/elasticsearch:/usr/share/elasticsearch/data
 
