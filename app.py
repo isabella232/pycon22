@@ -1,10 +1,10 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-
 import pandas as pd
 from dateutil import parser
-
+from elasticsearch import Elasticsearch, helpers
+from flask import Flask
+from flask_migrate import Migrate
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://postgres:postgres@localhost:5432/pycon22"
@@ -18,6 +18,24 @@ CSV_FILENAME = "data/netflix_titles.csv"
 @app.route("/")
 def hello_world():
     return "<p>Hello, World!</p>"
+
+
+
+
+@app.route("/bulk-ingest")
+def bulk_ingest():
+    """Ingest all shows into Elasticsearch index."""
+    
+    es = Elasticsearch()
+
+    doc = {
+        'author': 'kimchy',
+        'text': 'Elasticsearch: cool. bonsai cool.',
+        'timestamp': datetime.now(),
+    }
+    resp = es.index(index="test-index", id=1, document=doc)
+    print(resp['result'])
+
 
 
 @app.route("/populate-db")
