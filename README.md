@@ -1,4 +1,4 @@
-# pycon22
+# PyCon 2022
 
 This is small demo application that shows you how to ingest data into Elasticsearch and then use it in your Flask project.
 
@@ -12,17 +12,7 @@ There is a `docker-compose.yml` that starts a Postgres database, Elasticsearch a
 docker-compose up
 ```
 
-### Set password of Elasticsearch superuser
-
-After all the services have started up you can reset the password of the Elasticsearch superuser. The username is `elastic`:
-
-Run this command to reset the password:
-
-```bash
-docker exec -it elasticsearch /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic
-```
-
-Now you have a running Elasticsearch on https://localhost:9200
+Now you have a running Elasticsearch on http://localhost:9200
 
 ### Create Postgres DB
 
@@ -38,7 +28,7 @@ This should log you into the Postgres console (without asking for a password). N
 create database pycon22;
 ```
 
-Voila, you have a Postgres database
+Voila, you have a Postgres database.
 
 ### Setup and start the Flask project
 
@@ -89,3 +79,18 @@ If you have done everything in _Getting Started_ you have a Flask app, Postgres,
 Postgres contains all the data and there is nothing in Elasticsearch.
 
 Let's change that.
+
+You have to run Flask and then call a special endpoint to ingest everything:
+
+```
+./run.sh
+```
+
+Then point your browser to: http://localhost:5000/bulk-ingest
+
+Now you have a Elasticsearch index called `shows` that contains all the shows from your Postgres db.
+You can check it out by pointing your browser to:
+
+```
+http://localhost:9200/shows/_search?size=10000&q=*:*
+```
