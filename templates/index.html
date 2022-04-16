@@ -8,76 +8,103 @@
     <link href="../static/css/main.css" rel="stylesheet"/>
 </head>
 <body>
-<div class="s006">
-    <form action="/" method="GET">
+<div id="s006" class="s006">
+    <form id="search-form">
         <fieldset>
             <legend>Which movie are you looking for?</legend>
             <div class="inner-form">
                 <div class="input-field">
-                    <button class="btn-search" type="button">
+                    <button class="btn-search" type="">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                              viewBox="0 0 24 24">
                             <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path>
                         </svg>
                     </button>
-                    <input id="search" name="q" type="text" placeholder=""
-                           value="{% if result['query'] %}{{result['query']}} {% endif %}"/>
+                    <input id="search" name="q" type="text" placeholder="" value=""/>
                 </div>
             </div>
         </fieldset>
     </form>
-    {{result_data}}
-    <div style="overflow:scroll; height:100%;">
-        {% if result['hit_count'] is not none %}
-            <div class="container"
-                 style="margin: 10px; padding: 10px; background-color: #351897; color:#fff">
-                Search Results: Got {{result['hit_count']}} hits</div>
-        {% endif %}
-        {% for movie in result['result_data'] %}
-
-        <div class="container" style="margin: 10px">
-
-            <div class="container__text" style="width: 100%">
-                <h1>{{movie['name']}}</h1>
-                <div class="container__text__star">
-                    <span class="fa fa-star checked"></span>
-                    <span class="fa fa-star checked"></span>
-                    <span class="fa fa-star checked"></span>
-                    <span class="fa fa-star checked"></span>
-                    <span class="fa fa-star checked"></span>
-                </div>
-                <h2>Description</h2>
-                <p>
-                    {{movie['description']}}
-                </p>
-                <h2>Cast</h2>
-                <p>
-                    {{movie['cast']}}
-                </p>
-                <div class="container__text__timing">
-                    <div class="container__text__timing_time">
-                        <h2>Country</h2>
-                        <p>{{movie['country']}}</p>
-                    </div>
-
-                    <div class="container__text__timing_time">
-                        <h2>Release Year</h2>
-                        <p>{{movie['release_year']}}</p>
-                    </div>
-                    <div class="container__text__timing_time">
-                        <h2>Rating</h2>
-                        <p>{{movie['rating']}}</p>
-                    </div>
-                    <div class="container__text__timing_time">
-                        <h2>Duration</h2>
-                        <p>{{movie['duration']}}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
+    <div id="query-results" style="overflow:scroll; height:100%;"></div>
 </div>
 
 </body><!-- This templates was made by Colorlib (https://colorlib.com) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"
+        type="text/javascript"></script>
+<script type="text/javascript">
+    $SCRIPT_ROOT = "http://127.0.0.1:5000"
+</script>
+<script type="text/javascript">
+    $(function () {
+        $('#search').keyup(function (ev) {
+            ev.preventDefault();
+            $.getJSON($SCRIPT_ROOT + '/search', {
+                q: $('input[name="q"]').val(),
+            }, function (data) {
+                let html = ``
+                if (data["hit_count"] !== null) {
+                    html += `
+                        <div class="container" style="margin: 10px; padding: 10px; background-color: #351897; color:#fff">
+                                 Search Results: Got ${data["hit_count"]} hits
+                         </div>
+                    `
+                }
+                if (data["result_data"].length > 0) {
+                    html += `<div style="overflow:scroll; height:100%;">`
+                    for (const movie of data["result_data"]) {
+                        html += `
+                        <div class="container" style="margin: 10px">
+                            <div class="container__text" style="width: 100%">
+                                <h1>${movie['name']}</h1>
+                                <div class="container__text__star">
+                                    <span class="fa fa-star checked"></span>
+                                    <span class="fa fa-star checked"></span>
+                                    <span class="fa fa-star checked"></span>
+                                    <span class="fa fa-star checked"></span>
+                                    <span class="fa fa-star checked"></span>
+                                </div>
+                                <h2>Description</h2>
+                                <p>
+                                    ${movie['description']}
+                                </p>
+                                <h2>Cast</h2>
+                                <p>
+                                    ${movie['cast']}
+                                </p>
+                                <div class="container__text__timing">
+                                    <div class="container__text__timing_time">
+                                        <h2>Country</h2>
+                                        <p>${movie['country']}</p>
+                                    </div>
+
+                                    <div class="container__text__timing_time">
+                                        <h2>Release Year</h2>
+                                        <p>${movie['release_year']}</p>
+                                    </div>
+                                    <div class="container__text__timing_time">
+                                        <h2>Rating</h2>
+                                        <p>${movie['rating']}</p>
+                                    </div>
+                                    <div class="container__text__timing_time">
+                                        <h2>Duration</h2>
+                                        <p>${movie['duration']}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                      `
+                    }
+                    html += `</div>`
+                }
+                let node = document.getElementById("query-results");
+                node.innerHTML = html;
+            });
+            return false;
+        });
+    });
+    $(document).on("keydown", "form", function (event) {
+        return event.key != "Enter";
+    });
+</script>
+
 </html>

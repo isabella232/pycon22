@@ -2,6 +2,7 @@ import pandas as pd
 from dateutil import parser
 from elasticsearch import Elasticsearch, helpers
 from flask import Flask
+from flask import jsonify
 from flask import request
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -24,18 +25,24 @@ migrate = Migrate(app, db)
 
 @app.route("/", methods=["GET", "POST"])
 def hello_world():
+    return render_template('index.html')
+
+
+@app.route("/search")
+def search_es():
     query = request.args.get("q")
-    print("Your query is ", query)
     es = Elasticsearch(ELASTICSEARCH_HOST)
     result_data = {}
     hit_count = None
     if query:
         resp = es.search(index=INDEX_NAME, body={"query": {"match": {"name": query}}}, size=1000)
-        print("Got %d Hits:" % resp['hits']['total']['value'])
         hit_count = resp['hits']['total']['value']
         result_data = [hit["_source"] for hit in resp["hits"]["hits"]]
-    return render_template('index.html', result={
-        "query": query, "result_data": result_data, "hit_count": hit_count})
+    results = {
+        "query": query, "result_data": result_data, "hit_count": hit_count
+    }
+    return jsonify(results)
+
 
 
 @app.route("/bulk-ingest")
