@@ -8,7 +8,6 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask import render_template
 
-from datetime import datetime
 
 SAMPLE_DATA_CSV_FILENAME = "data/netflix_titles.csv"
 SQLALCHEMY_DATABASE_URI = "postgresql://postgres:postgres@localhost:5432/pycon22"
