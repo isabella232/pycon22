@@ -2,8 +2,11 @@ import pandas as pd
 from dateutil import parser
 from elasticsearch import Elasticsearch, helpers
 from flask import Flask
+from flask import request
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from flask import render_template
+
 from datetime import datetime
 
 SAMPLE_DATA_CSV_FILENAME = "data/netflix_titles.csv"
@@ -19,9 +22,20 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def hello_world():
-    return "<p>Hello, World!</p>"
+    query = request.args.get("q")
+    print("Your query is ", query)
+    es = Elasticsearch(ELASTICSEARCH_HOST)
+    result_data = {}
+    hit_count = None
+    if query:
+        resp = es.search(index=INDEX_NAME, body={"query": {"match": {"name": query}}}, size=1000)
+        print("Got %d Hits:" % resp['hits']['total']['value'])
+        hit_count = resp['hits']['total']['value']
+        result_data = [hit["_source"] for hit in resp["hits"]["hits"]]
+    return render_template('index.html', result={
+        "query": query, "result_data": result_data, "hit_count": hit_count})
 
 
 @app.route("/bulk-ingest")
