@@ -1,13 +1,10 @@
 import pandas as pd
 from dateutil import parser
 from elasticsearch import Elasticsearch, helpers
-from flask import Flask
-from flask import jsonify
-from flask import request
+from flask import Flask, jsonify, render_template, request
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask import render_template
-
+from sqlalchemy import event
 
 SAMPLE_DATA_CSV_FILENAME = "data/netflix_titles.csv"
 SQLALCHEMY_DATABASE_URI = "postgresql://postgres:postgres@localhost:5432/pycon22"
@@ -67,6 +64,37 @@ def _generate_bulk_show_data():
             '_id': show.id,
             '_source': show.search_document(),
         }
+
+
+@app.route("/shows/new", methods = ['POST'])
+def new_show():
+    """Create a new Show
+
+    For testing your can use this CURL command to send data to the endpoint:
+    curl -X POST http://localhost:5000/shows/new -i -H 'Content-Type: application/json' -d '{ "show_type": "Movie", "name": "TRON", "director": "Steven Linsberger", "cast": "Jeff Bridges, Cindy Morgan", "country": "United States", "date_added": "1982-01-01", "release_year": "1982", "rating": "PG", "duration": "96 min", "description": "A computer hacker is abducted into the digital world and forced to participate in gladiatorial games where his only chance of escape is with the help of a heroic security program." }'
+    """
+    data = request.get_json()
+    new_show = ShowModel(
+        show_type=data['show_type'] if 'show_type' in data else None,
+        name=data['name'] if 'name' in data else None,
+        director=data['director'] if 'director' in data else None,
+        cast=data['cast'] if 'cast' in data else None,
+        country=data['country'] if 'country' in data else None,
+        date_added=parser.parse(data['date_added']) if 'date_added' in data else None,
+        release_year=data['release_year'] if 'release_year' in data else None,
+        rating=data['rating'] if 'rating' in data else None,
+        duration=data['duration'] if 'duration' in data else None,
+        description=data['description'] if 'description' in data else None,
+    )
+    db.session.add(new_show)
+    db.session.commit()
+
+    result = {
+        "status": "OK",
+        "message": f"Show '{new_show.name}' (id: {new_show.id}) created.",
+    }
+    return result, 201
+
 
 
 @app.route("/populate-db")
@@ -149,3 +177,14 @@ class ShowModel(db.Model):
             "duration": self.duration,
             "description": self.description,
         }
+
+
+@event.listens_for(ShowModel, 'after_insert')
+def add_show_to_elasticsearch(mapper, connection, show):
+    es = Elasticsearch(ELASTICSEARCH_HOST)
+    resp = es.index(
+        index = INDEX_NAME,
+        id = show.id,
+        body = show.search_document(),
+    )
+    print(f"Updated show in ElasticSearch Index: {resp}")
