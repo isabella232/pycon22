@@ -4,7 +4,7 @@ from elasticsearch import Elasticsearch, helpers
 from flask import Flask, request
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from sqlalchemy import event
 
 SAMPLE_DATA_CSV_FILENAME = "data/netflix_titles.csv"
 SQLALCHEMY_DATABASE_URI = "postgresql://postgres:postgres@localhost:5432/pycon22"
@@ -160,3 +160,14 @@ class ShowModel(db.Model):
             "duration": self.duration,
             "description": self.description,
         }
+
+
+@event.listens_for(ShowModel, 'after_insert')
+def add_show_to_elasticsearch(mapper, connection, show):
+    es = Elasticsearch(ELASTICSEARCH_HOST)
+    resp = es.index(
+        index = INDEX_NAME,
+        id = show.id,
+        body = show.search_document(),
+    )
+    print(f"Updated show in ElasticSearch Index: {resp}")
