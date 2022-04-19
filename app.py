@@ -33,10 +33,16 @@ def search_es():
     if search_term:
         es = Elasticsearch(ELASTICSEARCH_HOST)
 
-        es_query = {
+        # Simple Query String Query
+        # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-simple-query-string-query.html
+        # TODO: filter only rating G (general) and PG (parental guidance)
+        es_query =  {
             "query": {
-                "match": {
-                    "name": search_term
+                "simple_query_string" : {
+                    "query": search_term,
+#                    "fields": ["name"],
+                    "fields": ["name^5", "director^3", "cast^2", "description"],
+                    "default_operator": "and"
                 }
             }
         }
