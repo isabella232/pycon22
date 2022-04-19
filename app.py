@@ -20,23 +20,38 @@ migrate = Migrate(app, db)
 
 
 @app.route("/", methods=["GET", "POST"])
-def hello_world():
+def main():
     return render_template('index.html')
 
 
 @app.route("/search")
 def search_es():
-    query = request.args.get("q")
-    es = Elasticsearch(ELASTICSEARCH_HOST)
+    search_term = request.args.get("q")
     result_data = {}
     hit_count = None
-    if query:
-        resp = es.search(index=INDEX_NAME, body={"query": {"match": {"name": query}}}, size=1000)
+
+    if search_term:
+        es = Elasticsearch(ELASTICSEARCH_HOST)
+
+        es_query = {
+            "query": {
+                "match": {
+                    "name": search_term
+                }
+            }
+        }
+
+        resp = es.search(index=INDEX_NAME, body=es_query, size=1000)
+
         hit_count = resp['hits']['total']['value']
         result_data = [hit["_source"] for hit in resp["hits"]["hits"]]
+
     results = {
-        "query": query, "result_data": result_data, "hit_count": hit_count
+        "query": search_term,
+        "result_data": result_data,
+        "hit_count": hit_count,
     }
+
     return jsonify(results)
 
 
@@ -48,16 +63,18 @@ def bulk_ingest():
     You can look at the index in the browser with this URL:
     http://localhost:9200/shows/_search?size=10000&q=*:*
     """
-    
+
     es = Elasticsearch(ELASTICSEARCH_HOST)
+
     resp = helpers.bulk(es, _generate_bulk_show_data())
-    print(resp)
+    print(f"Bulk indexing done: {resp}")
 
     return "<p>Bulk ingest done.</p>"
 
 
 def _generate_bulk_show_data():
     """Generator that yields all shows in a JSON format Elasticsearch can ingest."""
+
     for show in ShowModel.query.all():
         yield {
             '_index': INDEX_NAME,
@@ -93,6 +110,7 @@ def new_show():
         "status": "OK",
         "message": f"Show '{new_show.name}' (id: {new_show.id}) created.",
     }
+
     return result, 201
 
 
@@ -107,7 +125,7 @@ def populate_db():
     df = df.where(pd.notnull(df), None)  # replace NaN with None
 
     for _, row in df.iterrows():
-        
+
         show = row.to_dict()
         # save show to db
         try:
@@ -160,7 +178,7 @@ class ShowModel(db.Model):
         self.rating = rating
         self.duration = duration
         self.description = description
-        
+
     def __repr__(self):
         return f"<Show {self.name}>"
 
@@ -181,10 +199,14 @@ class ShowModel(db.Model):
 
 @event.listens_for(ShowModel, 'after_insert')
 def add_show_to_elasticsearch(mapper, connection, show):
+    """Adds a given show to the Elasticsearch index"""
+
     es = Elasticsearch(ELASTICSEARCH_HOST)
+
     resp = es.index(
         index = INDEX_NAME,
         id = show.id,
         body = show.search_document(),
     )
+
     print(f"Updated show in ElasticSearch Index: {resp}")
