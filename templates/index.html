@@ -65,29 +65,33 @@
                                 </div>
                                 <h2>Description</h2>
                                 <p>
-                                    ${movie['description']}
+                                    ${movie['description'] || "-"}
+                                </p>
+                                <h2>Director</h2>
+                                <p>
+                                    ${movie['director'] || "-"}
                                 </p>
                                 <h2>Cast</h2>
                                 <p>
-                                    ${movie['cast']}
+                                    ${movie['cast'] || "-"}
                                 </p>
                                 <div class="container__text__timing">
                                     <div class="container__text__timing_time">
                                         <h2>Country</h2>
-                                        <p>${movie['country']}</p>
+                                        <p>${movie['country'] || "-"}</p>
                                     </div>
 
                                     <div class="container__text__timing_time">
                                         <h2>Release Year</h2>
-                                        <p>${movie['release_year']}</p>
+                                        <p>${movie['release_year'] || "-"}</p>
                                     </div>
                                     <div class="container__text__timing_time">
                                         <h2>Rating</h2>
-                                        <p>${movie['rating']}</p>
+                                        <p>${movie['rating'] || "-"}</p>
                                     </div>
                                     <div class="container__text__timing_time">
                                         <h2>Duration</h2>
-                                        <p>${movie['duration']}</p>
+                                        <p>${movie['duration'] || "-"}</p>
                                     </div>
                                 </div>
                             </div>
