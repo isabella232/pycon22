@@ -121,6 +121,93 @@ def new_show():
 
 
 
+"""
+app = Flask(__name__)
+db = SQLAlchemy(app)
+
+@app.route("/shows/new", methods = ['POST'])
+def new_show():
+    data = request.get_json()
+    new_show = ShowModel(
+        title=data['title'],
+        director=data['director'],
+        cast=data['cast'],
+        date_added=parser.parse(data['date_added']),
+    )
+    db.session.add(new_show)
+    db.session.commit()
+
+
+
+class ShowModel(db.Model):
+    pass
+
+
+
+
+from sqlalchemy import event
+
+@event.listens_for(ShowModel, 'after_insert')
+def add_show_to_elasticsearch(mapper, connection, show):
+    es = Elasticsearch(ELASTICSEARCH_HOST)
+    es.index(
+        index=INDEX_NAME,
+        id=show.id,
+        body=show.search_document(),
+    )
+
+
+class ShowModel(db.Model):
+    def search_document(self):
+        return {
+            "title": self.title,
+            "director": self.director,
+            "cast": self.cast,
+            "date_added": self.date_added,
+        }
+
+
+
+
+
+
+search_term = "scorsese"
+es_query =  {
+    "query": {
+        "simple_query_string" : {
+            "query": search_term,
+            "fields": ["name^5", "director^3", "cast^2", "description"],
+            "default_operator": "and"
+        }
+    }
+}
+
+es = Elasticsearch(ELASTICSEARCH_HOST)
+resp = es.search(index=INDEX_NAME, body=es_query, size=1000)
+
+hit_count = resp['hits']['total']['value']
+result_data = [hit["_source"] for hit in resp["hits"]["hits"]]
+
+
+
+
+from elasticsearch import Elasticsearch, helpers
+
+def generate_bulk_show_data():
+    for show in ShowModel.query.all():
+        yield {
+            '_index': INDEX_NAME,
+            '_id': show.id,
+            '_source': show.search_document(),
+        }
+
+es = Elasticsearch(ELASTICSEARCH_HOST)
+resp = helpers.bulk(es, generate_bulk_show_data())
+
+"""
+
+
+
 @app.route("/populate-db")
 def populate_db():
     """Populates the relational db with sample data.
