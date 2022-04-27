@@ -5,7 +5,8 @@ This is small demo application that shows you how to ingest data into Elasticsea
 This demo app was used for our Talk "Python and Elasticsearch, A Match made in Heaven" at PyCon 2022 in Salt Lake City, Utah.
 
 You can find the slides to the talk here:
-https://docs.google.com/presentation/d/1640Z5P2DmpqnK2jZ6ZEZLf1r1-sH_pbX7vaYC30b5aY/edit
+
+https://docs.google.com/presentation/d/1640Z5P2DmpqnK2jZ6ZEZLf1r1-sH_pbX7vaYC30b5aY/edit?usp=sharing
 
 # Getting started
 
@@ -113,4 +114,4 @@ If you point now your browser to `http://127.0.0.1:5000/` you will see a simple 
 
 # Feedback / Questions?
 
-How do you like the demo application? Do you have any questions or need help? Don't hesitate and head over to our Discord server and ask in the #python channel!
+How do you like the demo application? Do you have any questions or need help? Don't hesitate and head over to our [Discord](https://discord.com/invite/Ww9hbqr) server and ask in the [#python](https://discord.com/channels/621778831602221064/621783758739079168) channel!
